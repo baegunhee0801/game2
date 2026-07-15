@@ -1,0 +1,1256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>생일 축하해! 🎉</title>
+    <style>
+        * {
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: #ffe6e6;
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            padding: 10px;
+        }
+
+        /* [1. 클리커 게임 판] */
+        .game-container {
+            text-align: center;
+            background: white;
+            padding: 35px;
+            border-radius: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.12);
+            width: 100%;
+            max-width: 450px;
+            position: relative;
+            transition: opacity 0.5s ease;
+        }
+
+        h1 { color: #ff4d6d; font-size: 2.2rem; margin-bottom: 5px; }
+
+        .counter-box {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #333;
+            background: #fff0f3;
+            padding: 10px 25px;
+            border-radius: 18px;
+            display: inline-block;
+            margin-bottom: 20px;
+            border: 2px dashed #ff85a1;
+        }
+        .counter-box span { color: #ff4d6d; font-size: 1.8rem; }
+
+        #guideText {
+            color: #666; font-size: 1.2rem; line-height: 1.4;
+            margin: 5px 0 25px 0; min-height: 50px;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.3s ease;
+        }
+        #guideText.changed { color: #e63946; font-weight: bold; font-size: 1.35rem; animation: bounce 0.4s ease; }
+
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+
+        /* 타격 반응을 위한 애니메이션 클래스 */
+        @keyframes cake-squish {
+            0% { transform: scale(1); }
+            30% { transform: scale(0.9, 1.15) translateY(-8px); }
+            60% { transform: scale(1.08, 0.92) translateY(3px); }
+            100% { transform: scale(1); }
+        }
+        .squish-active {
+            animation: cake-squish 0.25s cubic-bezier(0.25, 0.8, 0.25, 1.25);
+        }
+
+        .cake-area {
+            position: relative; width: 100%; height: 260px; margin-top: 50px;
+            transition: transform 0.1s ease-out; display: flex; justify-content: center; align-items: flex-end;
+        }
+
+        .cake {
+            width: 220px; height: 140px; background: #ffb3c1;
+            border-radius: 12px 12px 0 0; position: relative; box-shadow: inset 0 12px 0 #ff85a1;
+            transform-origin: bottom center;
+        }
+        .cake::after { content: ''; position: absolute; width: 220px; height: 26px; background: #fff0f3; bottom: 40px; left: 0; }
+
+        .flame-container {
+            position: absolute;
+            bottom: 120px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 150px;
+            cursor: pointer;
+            z-index: 5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+        }
+
+        .candle {
+            width: 20px;
+            height: 75px;
+            background: #ff4d6d;
+            border-radius: 4px;
+            box-shadow: inset -5px 0 0 #ff758f;
+            position: relative;
+            z-index: 1;
+        }
+
+        .flame {
+            width: 32px;
+            height: 48px;
+            background: radial-gradient(circle at 50% 80%, #ffbe0b, #ff006e);
+            border-radius: 50% 50% 20% 20%;
+            animation: flicker 0.6s infinite alternate;
+            transform-origin: center bottom;
+            pointer-events: none;
+            margin-bottom: -4px;
+            z-index: 2;
+            transition: transform 0.1s ease;
+        }
+
+        @keyframes flicker { 
+            0% { transform: scale(1) rotate(-1deg); } 
+            100% { transform: scale(1.05) rotate(1deg); } 
+        }
+        .flame.hit { animation: none; transform: scale(0.25, 0.65) translateY(20px) rotate(-25deg); opacity: 0.4; }
+
+        /* [2. 지뢰찾기 보드] */
+        .card-game-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(255, 230, 230, 0.98); z-index: 100;
+            flex-direction: column; align-items: center; justify-content: center; padding: 15px;
+        }
+        .card-grid {
+            display: grid; grid-template-columns: repeat(15, 1fr); grid-template-rows: repeat(15, 1fr); gap: 3px;
+            width: 100%; max-width: 420px; aspect-ratio: 1 / 1; background: #fff; padding: 8px; border-radius: 12px;
+            box-shadow: 0 12px 28px rgba(0,0,0,0.1);
+        }
+        .card-item {
+            background-color: #ff85a1; border-radius: 4px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: bold; color: #666;
+        }
+        .card-item.miss { background-color: #f0f0f0; pointer-events: none; }
+        .card-item.near-candle { color: #e63946; background-color: #ffe3e8; }
+        .card-item.hit-target { background-color: #fff; border: 3px solid #ff4d6d; font-size: 16px; }
+
+        /* [3. RPG 배틀 모드] */
+        .rpg-game-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #1e1e24; z-index: 150; flex-direction: column; align-items: center; justify-content: center; padding: 15px;
+        }
+        
+        .boss-bar-container {
+            width: 100%; max-width: 400px; height: 22px; background: #333; border: 2px solid #fff; border-radius: 11px;
+            margin-bottom: 12px; overflow: hidden; display: none; position: relative;
+        }
+        .boss-bar { width: 100%; height: 100%; background: linear-gradient(90deg, #9b59b6, #8e44ad); transition: width 0.1s ease; }
+        .boss-text { position: absolute; width: 100%; text-align: center; color: #fff; font-size: 11px; font-weight: bold; line-height: 18px; z-index: 2;}
+
+        /* 화면 흔들림 애니메이션 효과 */
+        @keyframes screen-shake {
+            0%, 100% { transform: translate(0, 0); }
+            10%, 90% { transform: translate(-4px, 3px); }
+            30%, 70% { transform: translate(4px, -3px); }
+            50% { transform: translate(-5px, -2px); }
+            60% { transform: translate(5px, 4px); }
+        }
+        .shake {
+            animation: screen-shake 0.18s ease-in-out;
+        }
+
+        .rpg-screen {
+            position: relative; width: 100%; max-width: 400px; height: 360px; background: #2c3e50;
+            border: 4px solid #fff; border-radius: 12px; overflow: hidden;
+        }
+        
+        .rpg-obj { position: absolute; width: 32px; height: 32px; border-radius: 50%; transform: translate(-50%, -50%); }
+        
+        #rpgPlayer { 
+            background: #3498db; 
+            border: 2px solid #fff; 
+            z-index: 10; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            transition: transform 0.08s ease-out;
+        }
+        
+        /* 바라보는 방향에 따라 동적으로 위치와 회전이 달라질 방향 지시 화살표 */
+        .direction-arrow {
+            position: absolute;
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 9px solid #f1c40f; 
+            filter: drop-shadow(0 1px 2px rgba(0,0,0,0.5));
+            pointer-events: none;
+            transition: all 0.08s ease-out; 
+        }
+
+        .invincible { animation: blink 0.15s infinite alternate; }
+        @keyframes blink { 0% { opacity: 0.3; } 100% { opacity: 1; } }
+
+        /* 타격 시 슬라임 깜빡임 이펙트 */
+        @keyframes damage-flash {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(2.5) saturate(1.5); }
+        }
+        .dmg-flash { animation: damage-flash 0.15s ease-out; }
+
+        /* 검 휘두르기 격렬한 원호 검기 연출 (리치 상향에 따라 크기 80px 증가) */
+        .slash-effect {
+            position: absolute; width: 80px; height: 80px; border: 6px solid transparent;
+            border-top-color: #f39c12; border-right-color: #f1c40f; border-radius: 50%; z-index: 12; pointer-events: none;
+            transform-origin: center center; display: none; animation: slash-spin 0.15s linear forwards;
+        }
+        @keyframes slash-spin {
+            0% { transform: translate(-50%, -50%) rotate(-45deg) scale(0.8); opacity: 1; }
+            100% { transform: translate(-50%, -50%) rotate(75deg) scale(1.2); opacity: 0.3; }
+        }
+
+        /* 튀는 타격 스파크 파티클 */
+        .hit-particle {
+            position: absolute; width: 6px; height: 6px; background: #ffbe0b;
+            border-radius: 50%; pointer-events: none; z-index: 15;
+            animation: particle-blow 0.25s cubic-bezier(0.1, 0.8, 0.3, 1) forwards;
+        }
+        @keyframes particle-blow {
+            0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(var(--tx), var(--ty)) scale(0.1); opacity: 0; }
+        }
+
+        .slime { background: #2ecc71; border: 1.5px solid #fff; z-index: 9; width: 24px; height: 24px; transition: transform 0.1s ease; }
+        .hp-bar-wrapper {
+            position: absolute; width: 24px; height: 4px; background: #444;
+            top: -8px; left: 50%; transform: translateX(-50%); border-radius: 2px; overflow: hidden;
+        }
+        .hp-bar-fill { width: 100%; height: 100%; background: #2ecc71; }
+
+        /* 하단 컨트롤러 */
+        .rpg-controls {
+            display: flex; width: 100%; max-width: 400px; justify-content: space-between; align-items: center; margin-top: 15px; padding: 0 5px;
+        }
+        .d-pad { display: grid; grid-template-columns: repeat(3, 50px); grid-template-rows: repeat(3, 50px); gap: 4px; }
+        .d-btn { background: #444; color: white; border: none; border-radius: 10px; font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; cursor: pointer;}
+        .d-btn:active { background: #666; }
+        .atk-btn { width: 85px; height: 85px; background: #e74c3c; color: white; border: none; border-radius: 50%; font-weight: bold; font-size: 1.2rem; box-shadow: 0 6px #c0392b; cursor: pointer; display: flex; align-items: center; justify-content: center;}
+        .atk-btn:active { transform: translateY(3px); box-shadow: 0 2px #c0392b; }
+
+        .player-hud { width: 100%; max-width: 400px; margin-top: 10px; display: flex; align-items: center; justify-content: space-between; color: white; font-size: 1rem; }
+        .player-hp-container { flex: 1; height: 16px; background: #333; border: 1.5px solid #fff; border-radius: 8px; margin-left: 10px; overflow: hidden; }
+        .player-hp-bar { width: 100%; height: 100%; background: #e74c3c; transition: width 0.1s ease; }
+
+
+        /* [4. 리듬 게임 모드 (200 클릭)] */
+        .rhythm-game-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: #111; z-index: 180; flex-direction: column; align-items: center; justify-content: center; padding: 10px;
+        }
+        .rhythm-header {
+            color: #fff; text-align: center; margin-bottom: 10px;
+        }
+        .rhythm-header h2 { color: #f1c40f; margin: 0 0 5px 0; font-size: 1.4rem; }
+        .rhythm-header p { margin: 0; font-size: 0.9rem; color: #aaa; }
+
+        .rhythm-screen {
+            position: relative; width: 100%; max-width: 360px; height: 420px; background: #18181c;
+            border: 4px solid #444; border-radius: 12px; overflow: hidden; display: flex;
+        }
+        
+        /* 4개 레인 선구 및 백그라운드 라인 플래시 */
+        .rhythm-lane {
+            flex: 1; height: 100%; border-right: 1px dashed #2d2d35; position: relative;
+            background: linear-gradient(to bottom, rgba(0,0,0,0) 80%, rgba(255,255,255,0.02) 100%);
+            overflow: hidden;
+        }
+        .rhythm-lane:last-child { border-right: none; }
+        
+        /* 건반 탭 플래시 연출 */
+        .lane-flash {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to top, rgba(241, 196, 15, 0.25), rgba(241, 196, 15, 0));
+            opacity: 0; pointer-events: none; z-index: 1; transition: opacity 0.08s ease;
+        }
+        .lane-flash.active { opacity: 1; }
+
+        /* 판정선 베이스 데코 */
+        .rhythm-judge-line {
+            position: absolute; bottom: 50px; left: 0; width: 100%; height: 18px;
+            background: rgba(255, 255, 255, 0.05); border-top: 1px solid #3a3a42; border-bottom: 1px solid #3a3a42;
+            pointer-events: none; z-index: 2;
+        }
+
+        /* ★ [핵심 업그레이드] 각 레인별 불투명 판정 틀 (Target Frame) */
+        .rhythm-target-frame {
+            position: absolute; bottom: 50px; left: 10%; width: 80%; height: 18px;
+            background: rgba(30, 30, 35, 0.95); border: 2.5px solid #f1c40f; border-radius: 4px;
+            box-shadow: 0 0 10px rgba(241, 196, 15, 0.5); z-index: 4; pointer-events: none;
+            transition: transform 0.08s ease, background-color 0.08s ease;
+        }
+        .rhythm-target-frame.hit-active {
+            transform: scale(1.22);
+            background-color: #f1c40f;
+            box-shadow: 0 0 20px #f1c40f;
+        }
+
+        /* 터치 조작 영역 (각 레인 최하단) */
+        .rhythm-touch-btn {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 60px;
+            background: #25252b; color: #fff; font-size: 1.2rem; font-weight: bold;
+            border: none; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; border-top: 1px solid #3e3e48; z-index: 10;
+        }
+        .rhythm-touch-btn:active { background: #3e3e48; }
+
+        /* 낙하하는 노트 */
+        .rhythm-note {
+            position: absolute; left: 10%; width: 80%; height: 14px;
+            background: linear-gradient(180deg, #3498db, #2980b9);
+            border: 1px solid #fff; border-radius: 3px; 
+            box-shadow: 0 0 8px rgba(52, 152, 219, 0.7);
+            z-index: 3;
+        }
+
+        /* 판정 이펙트 글씨 */
+        .judge-text {
+            position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
+            font-size: 2.2rem; font-weight: bold; font-style: italic; z-index: 20;
+            opacity: 0; pointer-events: none; transition: all 0.12s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .judge-text.pop { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+        .judge-perfect { color: #f1c40f; text-shadow: 0 0 12px rgba(241, 196, 15, 0.9); }
+        .judge-great { color: #2ecc71; text-shadow: 0 0 12px rgba(46, 204, 113, 0.9); }
+        .judge-bad { color: #e74c3c; text-shadow: 0 0 12px rgba(231, 76, 60, 0.9); }
+
+        /* 리듬 라이프바 (HP) */
+        .rhythm-hud {
+            width: 100%; max-width: 360px; margin-top: 12px; display: flex; flex-direction: column; gap: 5px;
+        }
+        .rhythm-hp-container {
+            width: 100%; height: 18px; background: #222; border: 2px solid #555; border-radius: 9px; overflow: hidden;
+        }
+        .rhythm-hp-bar {
+            width: 100%; height: 100%; background: #2ecc71; transition: width 0.1s ease, background-color 0.3s;
+        }
+
+
+        /* 성공 카드 */
+        .hidden-card {
+            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
+            background: white; padding: 30px 20px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            text-align: center; z-index: 250; opacity: 0; width: 85%; max-width: 320px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        .hidden-card.show { display: block; opacity: 1; transform: translate(-50%, -50%) scale(1); }
+        .btn { background: #ff4d6d; color: white; border: none; padding: 12px 25px; font-size: 1rem; border-radius: 25px; cursor: pointer; margin-top: 20px; font-weight: bold; }
+        .confetti { position: fixed; width: 8px; height: 8px; opacity: 0; z-index: 999; }
+    </style>
+</head>
+<body>
+
+    <!-- [클리커 본판] -->
+    <div class="game-container" id="gameBox">
+        <h1>🎂 생일 축하해!</h1>
+        <div class="counter-box">클릭 횟수: <span id="clickCount">0</span></div>
+        <p id="guideText">클릭해서 촛불을 꺼봐~</p>
+        
+        <div class="cake-area" id="cakeArea">
+            <div class="cake" id="cakeBody">
+                <div class="flame-container" id="flameHitbox" onmousedown="hitCandle(event)" ontouchstart="hitCandle(event)">
+                    <div class="flame" id="flame"></div>
+                    <div class="candle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- [지뢰찾기 화면] -->
+    <div class="card-game-overlay" id="cardModal">
+        <h2 style="color: #ff4d6d; margin: 0 0 5px 0; font-size: 1.5rem;">🔎 지뢰찾기: 촛불 탐지!</h2>
+        <p style="color: #555; font-size: 0.95rem; margin: 0 0 12px 0; text-align: center;">주변 8칸의 힌트를 얻어 촛불(🕯️)을 찾아 터치하세요!</p>
+        <div class="card-grid" id="cardGrid"></div>
+    </div>
+
+    <!-- [RPG 배틀 화면] -->
+    <div class="rpg-game-overlay" id="rpgModal">
+        <div class="boss-bar-container" id="bossBarContainer">
+            <div class="boss-text">👑 킹 슬라임</div>
+            <div class="boss-bar" id="bossHpBar"></div>
+        </div>
+        
+        <div class="rpg-screen" id="rpgScreen">
+            <div class="rpg-obj" id="rpgPlayer" style="left: 200px; top: 280px;">
+                <div class="direction-arrow" id="pArrow"></div>
+                🤠
+            </div>
+            <div class="slash-effect" id="slashEffect"></div>
+        </div>
+
+        <div class="player-hud">
+            <span>HP</span>
+            <div class="player-hp-container">
+                <div class="player-hp-bar" id="playerHpBar"></div>
+            </div>
+        </div>
+        
+        <div class="rpg-controls">
+            <div class="d-pad">
+                <div></div><button class="d-btn" onmousedown="setMobileDir('up')" ontouchstart="setMobileDir('up')" onmouseup="clearMobileDir()" ontouchend="clearMobileDir()">▲</button><div></div>
+                <button class="d-btn" onmousedown="setMobileDir('left')" ontouchstart="setMobileDir('left')" onmouseup="clearMobileDir()" ontouchend="clearMobileDir()">◀</button><div></div><button class="d-btn" onmousedown="setMobileDir('right')" ontouchstart="setMobileDir('right')" onmouseup="clearMobileDir()" ontouchend="clearMobileDir()">▶</button>
+                <div></div><button class="d-btn" onmousedown="setMobileDir('down')" ontouchstart="setMobileDir('down')" onmouseup="clearMobileDir()" ontouchend="clearMobileDir()">▼</button><div></div>
+            </div>
+            <button class="atk-btn" onmousedown="rpgSlashAttack()" ontouchstart="rpgSlashAttack()">공격</button>
+        </div>
+    </div>
+
+    <!-- [리듬 게임 화면 (200 클릭 대안)] -->
+    <div class="rhythm-game-overlay" id="rhythmModal">
+        <div class="rhythm-header">
+            <h2>🎵 생일 축하 리듬스타! 🎵</h2>
+            <p id="rhythmScore">남은 처리 노트 수: 30개</p>
+        </div>
+
+        <div class="rhythm-screen" id="rhythmScreen">
+            <div class="rhythm-judge-line"></div>
+            <div class="judge-text" id="judgeLabel">PERFECT!</div>
+
+            <!-- 4개 레인 (각 라인에 배경 플래시 및 불투명 프레임 탑재) -->
+            <div class="rhythm-lane" id="lane-0">
+                <div class="lane-flash" id="flash-0"></div>
+                <div class="rhythm-target-frame" id="frame-0"></div>
+                <button class="rhythm-touch-btn" onmousedown="triggerRhythmKey(0)" ontouchstart="triggerRhythmKey(0)">◀</button>
+            </div>
+            <div class="rhythm-lane" id="lane-1">
+                <div class="lane-flash" id="flash-1"></div>
+                <div class="rhythm-target-frame" id="frame-1"></div>
+                <button class="rhythm-touch-btn" onmousedown="triggerRhythmKey(1)" ontouchstart="triggerRhythmKey(1)">▲</button>
+            </div>
+            <div class="rhythm-lane" id="lane-2">
+                <div class="lane-flash" id="flash-2"></div>
+                <div class="rhythm-target-frame" id="frame-2"></div>
+                <button class="rhythm-touch-btn" onmousedown="triggerRhythmKey(2)" ontouchstart="triggerRhythmKey(2)">▼</button>
+            </div>
+            <div class="rhythm-lane" id="lane-3">
+                <div class="lane-flash" id="flash-3"></div>
+                <div class="rhythm-target-frame" id="frame-3"></div>
+                <button class="rhythm-touch-btn" onmousedown="triggerRhythmKey(3)" ontouchstart="triggerRhythmKey(3)">▶</button>
+            </div>
+        </div>
+
+        <div class="rhythm-hud">
+            <div style="color: #fff; font-size: 0.9rem; display: flex; justify-content: space-between;">
+                <span>🔋 리듬 쉴드 에너지</span>
+                <span id="rhythmHpText">100 / 100</span>
+            </div>
+            <div class="rhythm-hp-container">
+                <div class="rhythm-hp-bar" id="rhythmHpBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- [최종 성공 성적표] -->
+    <div class="hidden-card" id="celebrateCard">
+        <h2>🎉 대단해! 생일 축하해! 🎉</h2>
+        <p style="font-size: 1.15rem; color: #ff4d6d; font-weight: bold; margin-bottom: 10px;">300번 대장정 클리어! 🥳</p>
+        <p style="font-size: 0.95rem; color: #555;">리듬 게임과 보스전까지 클리어해내다니 진짜 감탄했다ㅋㅋㅋ<br>오늘 최고로 행복한 하루 보내길 바라! ❤️</p>
+        <button class="btn" onclick="location.reload()">다시 하기 🔄</button>
+    </div>
+
+    <script>
+        let clicks = 0;
+        const targetClicks = 300; 
+        let isFinished = false;
+        let audioCtx = null;
+
+        const GRID_SIZE = 15;
+        let targetRow = 0, targetCol = 0;
+
+        // RPG 시스템 변수
+        let rpgActive = false, rpgLoopId = null;
+        let player = { x: 200, y: 280, hp: 100, maxHp: 100, dir: 'up', angle: 0, lastHit: 0, isInvincible: false };
+        let slimes = [], kingSlime = null;
+        let attackActive = false;
+
+        const activeKeys = new Set();
+        let mobileDir = null; 
+
+        // --- [★ 리듬 게임 대폭 업그레이드 밸런스 변수] ---
+        let rhythmActive = false;
+        let rhythmLoopId = null;
+        let rhythmHp = 100;
+        const rhythmMaxHp = 100;
+        
+        let notesToWin = 30; // ★ 목표 노트 수 증가 (기존 15 -> 30)
+        let notesSpawned = 0;
+        let rhythmNotes = [];
+        let lastSpawnTime = 0;
+        
+        const spawnInterval = 700; // ★ 생성 간격 대폭 단축 (기존 1200ms -> 700ms)
+        const noteSpeed = 5.8;     // ★ 노트 낙하 속도 증가 (기존 3.5 -> 5.8)
+        const judgeLineY = 352;    // 판정선 위치 좌표
+
+        function playSound(type) {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                if (type === 'click') {
+                    osc.type = 'sine';
+                    let baseFreq = 400 + ((clicks % 50) * 3);
+                    osc.frequency.setValueAtTime(baseFreq, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+                } else if (type === 'hit_enemy') {
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(150, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(650, audioCtx.currentTime + 0.1);
+                    gain.gain.setValueAtTime(0.25, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+                } else if (type === 'slash') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(550, audioCtx.currentTime);
+                    osc.frequency.exponentialRampToValueAtTime(220, audioCtx.currentTime + 0.12);
+                    gain.gain.setValueAtTime(0.18, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+                } else if (type === 'hit_player') {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.22, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.18);
+                } else if (type === 'rhythm_perfect') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.28, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+                } else if (type === 'rhythm_great') {
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(587, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.20, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+                } else if (type === 'rhythm_bad') {
+                    osc.type = 'sawtooth'; osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+                    gain.gain.setValueAtTime(0.22, audioCtx.currentTime); gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+                }
+                osc.connect(gain); gain.connect(audioCtx.destination); osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+            } catch(e){}
+        }
+
+        function hitCandle(event) {
+            if (event) event.preventDefault();
+            if (isFinished) return;
+
+            clicks++;
+            document.getElementById('clickCount').innerText = clicks;
+            playSound('click');
+
+            const flame = document.getElementById('flame');
+            const guideText = document.getElementById('guideText');
+            const cakeArea = document.getElementById('cakeArea');
+            const cakeBody = document.getElementById('cakeBody');
+
+            cakeBody.classList.remove('squish-active');
+            void cakeBody.offsetWidth; 
+            cakeBody.classList.add('squish-active');
+
+            if (clicks === 10) {
+                guideText.innerText = "생일 축하해~ 빨리 촛불 꺼~!";
+                guideText.classList.add('changed');
+                createConfetti(true);
+            } else if (clicks === 70) {
+                guideText.innerText = "못 끄겠죠? ㅋ";
+                guideText.classList.remove('changed'); void guideText.offsetWidth; guideText.classList.add('changed');
+            } else if (clicks === 100) {
+                cakeArea.style.transform = `translate(0px, 0px)`;
+                initCardGame();
+                return; 
+            } else if (clicks === 150) {
+                initRpgGame();
+                return;
+            } else if (clicks === 200) {
+                initRhythmGame();
+                return;
+            }
+
+            if (clicks >= 70 && clicks < 100) {
+                const moveX = Math.floor(Math.random() * 160) - 80;
+                const moveY = Math.floor(Math.random() * 120) - 80;
+                cakeArea.style.transform = `translate(${moveX}px, ${moveY}px)`;
+            }
+
+            flame.classList.add('hit');
+            const remainingRatio = (targetClicks - clicks) / targetClicks;
+            setTimeout(() => {
+                flame.classList.remove('hit');
+                if (clicks < targetClicks) {
+                    flame.style.transform = `scale(${0.25 + remainingRatio * 0.75})`;
+                }
+            }, 120);
+
+            if (clicks >= targetClicks) {
+                isFinished = true;
+                flame.style.display = 'none';
+                document.getElementById('gameBox').style.opacity = '0.2';
+                setTimeout(() => {
+                    document.getElementById('celebrateCard').classList.add('show');
+                    createConfetti(false);
+                }, 400);
+            }
+        }
+
+        // --- [지뢰찾기 카드 게임] ---
+        function initCardGame() {
+            const modal = document.getElementById('cardModal');
+            const grid = document.getElementById('cardGrid');
+            grid.innerHTML = ''; modal.style.display = 'flex';
+            targetRow = Math.floor(Math.random() * GRID_SIZE);
+            targetCol = Math.floor(Math.random() * GRID_SIZE);
+
+            for (let r = 0; r < GRID_SIZE; r++) {
+                for (let c = 0; c < GRID_SIZE; c++) {
+                    const card = document.createElement('div');
+                    card.classList.add('card-item');
+                    card.addEventListener('mousedown', (e) => handleCardSweeper(e, r, c, card));
+                    card.addEventListener('touchstart', (e) => handleCardSweeper(e, r, c, card));
+                    grid.appendChild(card);
+                }
+            }
+        }
+
+        function handleCardSweeper(e, r, c, cardElement) {
+            e.preventDefault();
+            if (cardElement.classList.contains('miss') || cardElement.innerHTML !== '') return;
+
+            if (r === targetRow && c === targetCol) {
+                cardElement.classList.add('hit-target'); cardElement.innerHTML = '🕯️';
+                const resetAction = () => {
+                    document.getElementById('cardModal').style.display = 'none';
+                    document.getElementById('guideText').innerText = "촛불을 왜 100번이나 누르셨죠?";
+                    hitCandle(); 
+                };
+                cardElement.addEventListener('mousedown', resetAction);
+                cardElement.addEventListener('touchstart', resetAction);
+            } else {
+                playSound('miss'); cardElement.classList.add('miss');
+                let count = (Math.abs(r - targetRow) <= 1 && Math.abs(c - targetCol) <= 1) ? 1 : 0;
+                if (count > 0) { cardElement.classList.add('near-candle'); cardElement.innerText = count; }
+                else { cardElement.innerText = '0'; }
+            }
+        }
+
+        // --- [탑뷰 액션 RPG 모드] ---
+        function initRpgGame() {
+            document.getElementById('rpgModal').style.display = 'flex';
+            document.getElementById('bossBarContainer').style.display = 'none';
+            rpgActive = true;
+            
+            player = { x: 200, y: 280, hp: 100, maxHp: 100, dir: 'up', angle: 0, lastHit: 0, isInvincible: false };
+            slimes = []; kingSlime = null;
+            attackActive = false;
+            activeKeys.clear();
+            mobileDir = null;
+
+            for(let i=0; i<5; i++) {
+                slimes.push({
+                    id: 'slime_' + i,
+                    x: Math.random() * 300 + 50, 
+                    y: Math.random() * 100 + 40,
+                    hp: 3, maxHp: 3, isAggro: false,
+                    patrolDir: Math.random() * Math.PI * 2,
+                    patrolTime: 0
+                });
+            }
+            renderRpgInit();
+            rpgLoopId = requestAnimationFrame(rpgUpdate);
+        }
+
+        function renderRpgInit() {
+            const screen = document.getElementById('rpgScreen');
+            const objects = screen.querySelectorAll('.rpg-obj:not(#rpgPlayer)');
+            objects.forEach(obj => obj.remove());
+
+            slimes.forEach(s => {
+                const el = document.createElement('div');
+                el.classList.add('rpg-obj', 'slime'); el.id = s.id; el.innerText = '🟢';
+                el.style.left = s.x + 'px'; el.style.top = s.y + 'px';
+                
+                const wrapper = document.createElement('div');
+                wrapper.classList.add('hp-bar-wrapper');
+                const fill = document.createElement('div');
+                fill.classList.add('hp-bar-fill');
+                fill.id = 'fill_' + s.id;
+                wrapper.appendChild(fill);
+                el.appendChild(wrapper);
+
+                screen.appendChild(el);
+            });
+            updateRpgUi();
+        }
+
+        function setMobileDir(d) { mobileDir = d; }
+        function clearMobileDir() { mobileDir = null; }
+
+        window.addEventListener('keydown', (e) => {
+            if (rpgActive) {
+                const key = e.key.toLowerCase();
+                if(['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+                    activeKeys.add(key);
+                }
+                if(e.key === ' ') { e.preventDefault(); rpgSlashAttack(); }
+            }
+            if (rhythmActive) {
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { triggerRhythmKey(0); }
+                if (e.key === 'ArrowUp' || e.key === 's' || e.key === 'S') { triggerRhythmKey(1); }
+                if (e.key === 'ArrowDown' || e.key === 'k' || e.key === 'K') { triggerRhythmKey(2); }
+                if (e.key === 'ArrowRight' || e.key === 'l' || e.key === 'L') { triggerRhythmKey(3); }
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            if(!rpgActive) return;
+            const key = e.key.toLowerCase();
+            activeKeys.delete(key);
+        });
+
+        function triggerScreenShake(screenId = 'rpgScreen') {
+            const screen = document.getElementById(screenId);
+            screen.classList.remove('shake');
+            void screen.offsetWidth;
+            screen.classList.add('shake');
+            setTimeout(() => screen.classList.remove('shake'), 180);
+        }
+
+        // ★ [이펙트 강화] 파티클 생성 시스템 고도화
+        function spawnHitParticles(x, y, isRhythm = false) {
+            const parentId = isRhythm ? 'rhythmScreen' : 'rpgScreen';
+            const screen = document.getElementById(parentId);
+            
+            // 리듬 게임일 경우 타격 파티클 개수를 14개로 늘리고 화려한 형광색 배합
+            const pCount = isRhythm ? 14 : 6;
+            const colors = isRhythm ? ['#f1c40f', '#00f0ff', '#ff007f', '#2ecc71'] : ['#ffbe0b'];
+
+            for(let i=0; i<pCount; i++) {
+                const p = document.createElement('div');
+                p.classList.add('hit-particle');
+                p.style.left = x + 'px';
+                p.style.top = y + 'px';
+                
+                if (isRhythm) {
+                    p.style.width = (Math.random() * 6 + 4) + 'px';
+                    p.style.height = (Math.random() * 6 + 4) + 'px';
+                }
+                p.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                const targetX = (Math.random() * 120 - 60) + 'px';
+                const targetY = (Math.random() * 120 - 60) + 'px';
+                p.style.setProperty('--tx', targetX);
+                p.style.setProperty('--ty', targetY);
+
+                screen.appendChild(p);
+                setTimeout(() => p.remove(), 250);
+            }
+        }
+
+        function rpgSlashAttack() {
+            if(!rpgActive || attackActive) return;
+            attackActive = true;
+            playSound('slash');
+
+            const slash = document.getElementById('slashEffect');
+            const pEl = document.getElementById('rpgPlayer');
+            
+            slash.style.display = 'none';
+            void slash.offsetWidth; 
+            slash.style.display = 'block';
+            slash.style.left = player.x + 'px';
+            slash.style.top = player.y + 'px';
+
+            let baseAngle = player.angle;
+            slash.style.transform = `translate(-50%, -50%) rotate(${baseAngle - 45}deg)`;
+
+            let dashDist = 14; 
+            let rad = (player.angle - 90) * Math.PI / 180;
+            let shiftX = Math.cos(rad) * dashDist;
+            let shiftY = Math.sin(rad) * dashDist;
+            pEl.style.transform = `translate(calc(-50% + ${shiftX}px), calc(-50% + ${shiftY}px)) scale(1.15)`;
+
+            let reach = 75; 
+            let hitTriggered = false;
+
+            slimes.forEach((s, sIdx) => {
+                let dx = s.x - player.x;
+                let dy = s.y - player.y;
+                let dist = Math.hypot(dx, dy);
+
+                if (dist <= reach) {
+                    let isHit = false;
+                    if (player.dir === 'up' && dy < 10 && Math.abs(dx) < 35) isHit = true;
+                    if (player.dir === 'down' && dy > -10 && Math.abs(dx) < 35) isHit = true;
+                    if (player.dir === 'left' && dx < 10 && Math.abs(dy) < 35) isHit = true;
+                    if (player.dir === 'right' && dx > -10 && Math.abs(dy) < 35) isHit = true;
+
+                    if (isHit) {
+                        s.hp--; 
+                        hitTriggered = true;
+                        s.isAggro = true;
+                        
+                        const sEl = document.getElementById(s.id);
+                        if(sEl) {
+                            sEl.classList.remove('dmg-flash');
+                            void sEl.offsetWidth;
+                            sEl.classList.add('dmg-flash');
+                            
+                            s.x += Math.cos(rad) * 45;
+                            s.y += Math.sin(rad) * 45;
+
+                            if(s.x < 15) s.x = 15;
+                            if(s.x > 385) s.x = 385;
+                            if(s.y < 15) s.y = 15;
+                            if(s.y > 345) s.y = 345;
+                        }
+
+                        spawnHitParticles(s.x, s.y);
+
+                        const fill = document.getElementById('fill_' + s.id);
+                        if (fill) fill.style.width = (s.hp / s.maxHp * 100) + '%';
+
+                        if(s.hp <= 0) {
+                            setTimeout(() => {
+                                if(sEl) sEl.remove();
+                            }, 150);
+                            slimes.splice(sIdx, 1);
+                            if(slimes.length === 0 && !kingSlime) spawnKingSlime();
+                        }
+                    }
+                }
+            });
+
+            if (kingSlime) {
+                let dx = kingSlime.x - player.x;
+                let dy = kingSlime.y - player.y;
+                let dist = Math.hypot(dx, dy);
+
+                if (dist <= reach + 22) {
+                    let isHit = false;
+                    if (player.dir === 'up' && dy < 15) isHit = true;
+                    if (player.dir === 'down' && dy > -15) isHit = true;
+                    if (player.dir === 'left' && dx < 15) isHit = true;
+                    if (player.dir === 'right' && dx > -15) isHit = true;
+
+                    if (isHit) {
+                        kingSlime.hp--; 
+                        hitTriggered = true;
+                        
+                        const kEl = document.getElementById('kingSlime');
+                        if (kEl) {
+                            kEl.classList.remove('dmg-flash');
+                            void kEl.offsetWidth;
+                            kEl.classList.add('dmg-flash');
+                            kingSlime.x += Math.cos(rad) * 25;
+                            kingSlime.y += Math.sin(rad) * 25;
+
+                            if(kingSlime.x < 25) kingSlime.x = 25;
+                            if(kingSlime.x > 375) kingSlime.x = 375;
+                            if(kingSlime.y < 25) kingSlime.y = 25;
+                            if(kingSlime.y > 335) kingSlime.y = 335;
+                        }
+
+                        spawnHitParticles(kingSlime.x, kingSlime.y);
+
+                        document.getElementById('bossHpBar').style.width = (kingSlime.hp / kingSlime.maxHp * 100) + '%';
+                        if(kingSlime.hp <= 0) {
+                            setTimeout(() => {
+                                if(kEl) kEl.remove();
+                            }, 150);
+                            kingSlime = null;
+                            document.getElementById('bossBarContainer').style.display = 'none';
+                            rpgGameOver(true);
+                        }
+                    }
+                }
+            }
+
+            if (hitTriggered) {
+                playSound('hit_enemy');
+                triggerScreenShake();
+            }
+
+            setTimeout(() => { 
+                pEl.style.transform = `translate(-50%, -50%) scale(1)`;
+                slash.style.display = 'none'; 
+                attackActive = false; 
+            }, 120);
+        }
+
+        function updateRpgUi() {
+            document.getElementById('playerHpBar').style.width = player.hp + '%';
+            const pEl = document.getElementById('rpgPlayer');
+            pEl.style.left = player.x + 'px'; pEl.style.top = player.y + 'px';
+            
+            const arrow = document.getElementById('pArrow');
+            arrow.style.transform = `rotate(${player.angle}deg)`;
+
+            if (player.dir === 'up') {
+                arrow.style.top = '-10px'; arrow.style.left = '50%';
+                arrow.style.transform = 'translate(-50%, 0) rotate(0deg)';
+            } else if (player.dir === 'down') {
+                arrow.style.top = '30px'; arrow.style.left = '50%';
+                arrow.style.transform = 'translate(-50%, 0) rotate(180deg)';
+            } else if (player.dir === 'left') {
+                arrow.style.left = '-10px'; arrow.style.top = '50%';
+                arrow.style.transform = 'translate(0, -50%) rotate(-90deg)';
+            } else if (player.dir === 'right') {
+                arrow.style.left = '30px'; arrow.style.top = '50%';
+                arrow.style.transform = 'translate(0, -50%) rotate(90deg)';
+            }
+        }
+
+        function rpgUpdate(timestamp) {
+            if (!rpgActive) return;
+
+            let moveX = 0; let moveY = 0;
+
+            if (activeKeys.has('w') || activeKeys.has('arrowup')) moveY -= 1;
+            if (activeKeys.has('s') || activeKeys.has('arrowdown')) moveY += 1;
+            if (activeKeys.has('a') || activeKeys.has('arrowleft')) moveX -= 1;
+            if (activeKeys.has('d') || activeKeys.has('arrowright')) moveX += 1;
+
+            if (mobileDir === 'up') moveY = -1;
+            if (mobileDir === 'down') moveY = 1;
+            if (mobileDir === 'left') moveX = -1;
+            if (mobileDir === 'right') moveX = 1;
+
+            if (moveX !== 0 || moveY !== 0) {
+                const speed = 2.8;
+                const length = Math.hypot(moveX, moveY);
+                player.x += (moveX / length) * speed;
+                player.y += (moveY / length) * speed;
+
+                if (Math.abs(moveX) >= Math.abs(moveY)) {
+                    if (moveX < 0) { player.dir = 'left'; player.angle = -90; }
+                    else { player.dir = 'right'; player.angle = 90; }
+                } else {
+                    if (moveY < 0) { player.dir = 'up'; player.angle = 0; }
+                    else { player.dir = 'down'; player.angle = 180; }
+                }
+            }
+
+            if (player.x < 16) player.x = 16;
+            if (player.x > 384) player.x = 384;
+            if (player.y < 16) player.y = 16;
+            if (player.y > 344) player.y = 344;
+
+            if (player.isInvincible && timestamp - player.lastHit > 1000) {
+                player.isInvincible = false;
+                document.getElementById('rpgPlayer').classList.remove('invincible');
+            }
+
+            slimes.forEach(s => {
+                let distToPlayer = Math.hypot(player.x - s.x, player.y - s.y);
+                if (distToPlayer < 120) s.isAggro = true;
+
+                if (s.isAggro) {
+                    let angle = Math.atan2(player.y - s.y, player.x - s.x);
+                    s.x += Math.cos(angle) * 0.6; s.y += Math.sin(angle) * 0.6;
+                } else {
+                    s.patrolTime++;
+                    if(s.patrolTime > 80) {
+                        s.patrolDir = Math.random() * Math.PI * 2;
+                        s.patrolTime = 0;
+                    }
+                    s.x += Math.cos(s.patrolDir) * 0.25; s.y += Math.sin(s.patrolDir) * 0.25;
+                    
+                    if(s.x < 15 || s.x > 385) s.patrolDir = Math.PI - s.patrolDir;
+                    if(s.y < 15 || s.y > 345) s.patrolDir = -s.patrolDir;
+                }
+
+                const sEl = document.getElementById(s.id);
+                if(sEl) { sEl.style.left = s.x + 'px'; sEl.style.top = s.y + 'px'; }
+
+                if(distToPlayer < 20 && !player.isInvincible) {
+                    player.hp -= 20; playSound('hit_player');
+                    player.isInvincible = true;
+                    player.lastHit = timestamp;
+                    document.getElementById('rpgPlayer').classList.add('invincible');
+                    triggerScreenShake();
+                    if(player.hp <= 0) rpgGameOver(false);
+                }
+            });
+
+            if (kingSlime) {
+                let distToPlayer = Math.hypot(player.x - kingSlime.x, player.y - kingSlime.y);
+                let angle = Math.atan2(player.y - kingSlime.y, player.x - kingSlime.x);
+                kingSlime.x += Math.cos(angle) * 0.8; kingSlime.y += Math.sin(angle) * 0.8;
+                
+                const kEl = document.getElementById('kingSlime');
+                if(kEl) { kEl.style.left = kingSlime.x + 'px'; kEl.style.top = kingSlime.y + 'px'; }
+                
+                if(distToPlayer < 32 && !player.isInvincible) {
+                    player.hp -= 35; playSound('hit_player');
+                    player.isInvincible = true;
+                    player.lastHit = timestamp;
+                    document.getElementById('rpgPlayer').classList.add('invincible');
+                    triggerScreenShake();
+                    if(player.hp <= 0) rpgGameOver(false);
+                }
+            }
+
+            updateRpgUi();
+            if (rpgActive) rpgLoopId = requestAnimationFrame(rpgUpdate);
+        }
+
+        function spawnKingSlime() {
+            kingSlime = { x: 200, y: 70, hp: 15, maxHp: 15 };
+            const el = document.createElement('div');
+            el.classList.add('rpg-obj', 'slime'); el.id = 'kingSlime'; el.innerText = '👑';
+            el.style.left = kingSlime.x + 'px'; el.style.top = kingSlime.y + 'px';
+            el.style.width = '45px'; el.style.height = '45px'; el.style.fontSize = '24px';
+            document.getElementById('rpgScreen').appendChild(el);
+
+            document.getElementById('bossBarContainer').style.display = 'block';
+            document.getElementById('bossHpBar').style.width = '100%';
+        }
+
+        function rpgGameOver(isVictory) {
+            rpgActive = false; cancelAnimationFrame(rpgLoopId);
+            document.getElementById('rpgPlayer').classList.remove('invincible');
+            document.getElementById('rpgModal').style.display = 'none';
+
+            if (isVictory) {
+                clicks = 150; document.getElementById('clickCount').innerText = clicks;
+                document.getElementById('guideText').innerText = "보스 처치 완료! 계속해서 꺼봐!";
+                hitCandle();
+            } else {
+                alert("🔴 슬라임에게 쓰러졌습니다! 101번째 클릭부터 재개합니다.");
+                clicks = 100; document.getElementById('clickCount').innerText = clicks;
+                document.getElementById('guideText').innerText = "부활 성공! 힘내보자!";
+                hitCandle();
+            }
+        }
+
+        // --- [4. 리듬 게임 로직 (200클릭 단계 업그레이드)] ---
+        function initRhythmGame() {
+            document.getElementById('rhythmModal').style.display = 'flex';
+            rhythmActive = true;
+            rhythmHp = 100;
+            notesToWin = 30; // 30개 클리어 목표
+            notesSpawned = 0;
+            rhythmNotes = [];
+            lastSpawnTime = performance.now();
+
+            const existingNotes = document.querySelectorAll('.rhythm-note');
+            existingNotes.forEach(n => n.remove());
+
+            updateRhythmUi();
+            rhythmLoopId = requestAnimationFrame(rhythmUpdateLoop);
+        }
+
+        function spawnRhythmNote() {
+            if (notesSpawned >= 60) return; // 한 판에 발생 가능한 최대 세션 노트 한도 확장
+            
+            const laneIndex = Math.floor(Math.random() * 4);
+            const laneEl = document.getElementById(`lane-${laneIndex}`);
+            
+            const noteId = 'note_' + performance.now() + '_' + Math.random();
+            const noteEl = document.createElement('div');
+            noteEl.classList.add('rhythm-note');
+            noteEl.id = noteId;
+            noteEl.style.top = '0px';
+            
+            laneEl.appendChild(noteEl);
+            
+            rhythmNotes.push({
+                id: noteId,
+                element: noteEl,
+                lane: laneIndex,
+                y: 0
+            });
+            notesSpawned++;
+        }
+
+        function rhythmUpdateLoop(timestamp) {
+            if (!rhythmActive) return;
+
+            // 빠른 스폰 주기 700ms 적용
+            if (timestamp - lastSpawnTime > spawnInterval && notesSpawned < 55) {
+                spawnRhythmNote();
+                lastSpawnTime = timestamp;
+            }
+
+            for (let i = rhythmNotes.length - 1; i >= 0; i--) {
+                const note = rhythmNotes[i];
+                note.y += noteSpeed; // 속도 5.8
+                note.element.style.top = note.y + 'px';
+
+                // 판정선 통과 후 놓쳤을 때
+                if (note.y > judgeLineY + 38) {
+                    popJudgeText('BAD', 'judge-bad');
+                    playSound('rhythm_bad');
+                    rhythmHp -= 12; // 감점
+                    rhythmNotes.splice(i, 1);
+                    note.element.remove();
+                    triggerScreenShake('rhythmScreen'); 
+                    checkRhythmRules();
+                }
+            }
+
+            updateRhythmUi();
+            if (rhythmActive) rhythmLoopId = requestAnimationFrame(rhythmUpdateLoop);
+        }
+
+        function triggerRhythmKey(laneIdx) {
+            if (!rhythmActive) return;
+
+            // ★ [이펙트 강화] 1. 레인 플래시 활성화
+            const flashEl = document.getElementById(`flash-${laneIdx}`);
+            if (flashEl) {
+                flashEl.classList.add('active');
+                setTimeout(() => flashEl.classList.remove('active'), 100);
+            }
+
+            // ★ [이펙트 강화] 2. 판정 가이드 틀 일시 폭발 리액션
+            const frameEl = document.getElementById(`frame-${laneIdx}`);
+            if (frameEl) {
+                frameEl.classList.add('hit-active');
+                setTimeout(() => frameEl.classList.remove('hit-active'), 100);
+            }
+
+            let targetNoteIdx = -1;
+            let maxY = -1;
+            for (let i = 0; i < rhythmNotes.length; i++) {
+                if (rhythmNotes[i].lane === laneIdx && rhythmNotes[i].y > maxY) {
+                    maxY = rhythmNotes[i].y;
+                    targetNoteIdx = i;
+                }
+            }
+
+            // 완전 헛쳤을 때
+            if (targetNoteIdx === -1) {
+                popJudgeText('BAD', 'judge-bad');
+                playSound('rhythm_bad');
+                rhythmHp -= 6;
+                triggerScreenShake('rhythmScreen');
+                checkRhythmRules();
+                return;
+            }
+
+            const note = rhythmNotes[targetNoteIdx];
+            const diff = Math.abs(note.y - judgeLineY);
+
+            // 해당 레인 중심 가로 위치 연산 (파티클 스폰용)
+            const laneEl = document.getElementById(`lane-${laneIdx}`);
+            const rect = laneEl.getBoundingClientRect();
+            const pX = rect.width / 2;
+
+            // 판정 로직
+            if (diff <= 16) {
+                // PERFECT
+                popJudgeText('PERFECT!', 'judge-perfect');
+                playSound('rhythm_perfect');
+                spawnHitParticles(pX, judgeLineY, true); // 강화된 파티클
+                
+                notesToWin--;
+                rhythmNotes.splice(targetNoteIdx, 1);
+                note.element.remove();
+            } else if (diff <= 38) {
+                // GREAT
+                popJudgeText('GREAT', 'judge-great');
+                playSound('rhythm_great');
+                spawnHitParticles(pX, judgeLineY, true);
+
+                notesToWin--;
+                rhythmNotes.splice(targetNoteIdx, 1);
+                note.element.remove();
+            } else {
+                // 너무 빠르거나 늦은 경우 BAD
+                popJudgeText('BAD', 'judge-bad');
+                playSound('rhythm_bad');
+                triggerScreenShake('rhythmScreen');
+
+                rhythmHp -= 12;
+                rhythmNotes.splice(targetNoteIdx, 1);
+                note.element.remove();
+            }
+
+            checkRhythmRules();
+        }
+
+        function popJudgeText(text, className) {
+            const label = document.getElementById('judgeLabel');
+            label.className = 'judge-text ' + className;
+            label.innerText = text;
+            label.classList.remove('pop');
+            void label.offsetWidth;
+            label.classList.add('pop');
+        }
+
+        function updateRhythmUi() {
+            if (rhythmHp < 0) rhythmHp = 0;
+            document.getElementById('rhythmHpBar').style.width = rhythmHp + '%';
+            document.getElementById('rhythmHpText').innerText = `${rhythmHp} / 100`;
+            document.getElementById('rhythmScore').innerText = `남은 처리 노트 수: ${notesToWin > 0 ? notesToWin : 0}개`;
+
+            const bar = document.getElementById('rhythmHpBar');
+            if (rhythmHp < 35) bar.style.backgroundColor = '#e74c3c';
+            else if (rhythmHp < 65) bar.style.backgroundColor = '#f39c12';
+            else bar.style.backgroundColor = '#2ecc71';
+        }
+
+        function checkRhythmRules() {
+            if (rhythmHp <= 0) {
+                rhythmActive = false;
+                cancelAnimationFrame(rhythmLoopId);
+                document.getElementById('rhythmModal').style.display = 'none';
+                
+                alert("💔 리듬 쉴드 에너지가 고갈되어 실패했습니다! 151번째 클릭부터 재개합니다.");
+                clicks = 150; 
+                document.getElementById('clickCount').innerText = clicks;
+                document.getElementById('guideText').innerText = "심기일전하여 촛불을 다시 켜보자!";
+                hitCandle();
+            } else if (notesToWin <= 0) {
+                rhythmActive = false;
+                cancelAnimationFrame(rhythmLoopId);
+                document.getElementById('rhythmModal').style.display = 'none';
+
+                alert("🎉 리듬스타 완벽 클리어! 🕯️");
+                clicks = 200; 
+                document.getElementById('clickCount').innerText = clicks;
+                document.getElementById('guideText').innerText = "최고의 연주였어! 이제 촛불의 진짜 결말을 향해 가자!";
+                hitCandle();
+            }
+        }
+
+        // --- [성공 축하 가루 생성] ---
+        function createConfetti(isSides) {
+            const count = isSides ? 40 : 70;
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                if (isSides) {
+                    const isLeft = Math.random() > 0.5;
+                    confetti.style.left = isLeft ? (Math.random() * 10) + 'vw' : (90 + Math.random() * 10) + 'vw';
+                    confetti.style.top = '50vh';
+                } else {
+                    confetti.style.left = Math.random() * 100 + 'vw'; confetti.style.top = Math.random() * 100 + 'vh';
+                }
+                confetti.style.backgroundColor = `hsl(${Math.random() * 360}, 100%, 65%)`;
+                confetti.style.transform = `scale(${Math.random() * 1.2 + 0.5}) rotate(${Math.random() * 360}deg)`;
+                confetti.style.opacity = '1'; confetti.style.transition = 'all 2.2s cubic-bezier(0.1, 0.8, 0.3, 1)';
+                document.body.appendChild(confetti);
+                setTimeout(() => {
+                    confetti.style.top = (parseFloat(confetti.style.top) + (Math.random() * 40 - 20)) + 'vh';
+                    confetti.style.left = (parseFloat(confetti.style.left) + (Math.random() * 20 - 10)) + 'vw';
+                    confetti.style.opacity = '0';
+                }, 100);
+                setTimeout(() => confetti.remove(), 2400);
+            }
+        }
+    </script>
+</body>
+</html>
