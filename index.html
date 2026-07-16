@@ -9,7 +9,7 @@
             -webkit-tap-highlight-color: transparent;
             user-select: none;
             box-sizing: border-box;
-            /* 모바일에서 더블 탭 시 화면이 확대되거나 터치가 지연되는 현상 방지 */
+            /* 모바일에서 확대 및 기본 터치 제스처로 인한 지연 방지 */
             touch-action: manipulation; 
         }
 
@@ -163,7 +163,6 @@
         .boss-bar { width: 100%; height: 100%; background: linear-gradient(90deg, #9b59b6, #8e44ad); transition: width 0.1s ease; }
         .boss-text { position: absolute; width: 100%; text-align: center; color: #fff; font-size: 11px; font-weight: bold; line-height: 18px; z-index: 2;}
 
-        /* 화면 흔들림 애니메이션 효과 */
         @keyframes screen-shake {
             0%, 100% { transform: translate(0, 0); }
             10%, 90% { transform: translate(-4px, 3px); }
@@ -208,14 +207,12 @@
         .invincible { animation: blink 0.15s infinite alternate; }
         @keyframes blink { 0% { opacity: 0.3; } 100% { opacity: 1; } }
 
-        /* 타격 시 슬라임 깜빡임 이펙트 */
         @keyframes damage-flash {
             0%, 100% { filter: brightness(1); }
             50% { filter: brightness(2.5) saturate(1.5); }
         }
         .dmg-flash { animation: damage-flash 0.15s ease-out; }
 
-        /* 검 휘두르기 격렬한 원호 검기 연출 */
         .slash-effect {
             position: absolute; width: 80px; height: 80px; border: 6px solid transparent;
             border-top-color: #f39c12; border-right-color: #f1c40f; border-radius: 50%; z-index: 12; pointer-events: none;
@@ -226,7 +223,6 @@
             100% { transform: translate(-50%, -50%) rotate(75deg) scale(1.2); opacity: 0.3; }
         }
 
-        /* 튀는 타격 스파크 파티클 */
         .hit-particle {
             position: absolute; width: 6px; height: 6px; background: #ffbe0b;
             border-radius: 50%; pointer-events: none; z-index: 15;
@@ -244,7 +240,6 @@
         }
         .hp-bar-fill { width: 100%; height: 100%; background: #2ecc71; }
 
-        /* 하단 컨트롤러 */
         .rpg-controls {
             display: flex; width: 100%; max-width: 400px; justify-content: space-between; align-items: center; margin-top: 15px; padding: 0 5px;
         }
@@ -275,7 +270,6 @@
             border: 4px solid #444; border-radius: 12px; overflow: hidden; display: flex;
         }
         
-        /* 4개 레인 선구 및 백그라운드 라인 플래시 */
         .rhythm-lane {
             flex: 1; height: 100%; border-right: 1px dashed #2d2d35; position: relative;
             background: linear-gradient(to bottom, rgba(0,0,0,0) 80%, rgba(255,255,255,0.02) 100%);
@@ -283,7 +277,6 @@
         }
         .rhythm-lane:last-child { border-right: none; }
         
-        /* 건반 탭 플래시 연출 */
         .lane-flash {
             position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
             background: linear-gradient(to top, rgba(241, 196, 15, 0.25), rgba(241, 196, 15, 0));
@@ -291,14 +284,12 @@
         }
         .lane-flash.active { opacity: 1; }
 
-        /* 판정선 베이스 데코 */
         .rhythm-judge-line {
             position: absolute; bottom: 50px; left: 0; width: 100%; height: 18px;
             background: rgba(255, 255, 255, 0.05); border-top: 1px solid #3a3a42; border-bottom: 1px solid #3a3a42;
             pointer-events: none; z-index: 2;
         }
 
-        /* 각 레인별 불투명 판정 틀 (Target Frame) */
         .rhythm-target-frame {
             position: absolute; bottom: 50px; left: 10%; width: 80%; height: 18px;
             background: rgba(30, 30, 35, 0.95); border: 2.5px solid #f1c40f; border-radius: 4px;
@@ -311,16 +302,17 @@
             box-shadow: 0 0 20px #f1c40f;
         }
 
-        /* 터치 조작 영역 (각 레인 최하단) */
+        /* 터치 조작 버튼 (모바일 웹 뷰포트 드래그 및 오터치 방지 스타일 최적화) */
         .rhythm-touch-btn {
             position: absolute; bottom: 0; left: 0; width: 100%; height: 60px;
             background: #25252b; color: #fff; font-size: 1.2rem; font-weight: bold;
             border: none; display: flex; align-items: center; justify-content: center;
             cursor: pointer; border-top: 1px solid #3e3e48; z-index: 10;
+            user-select: none;
+            -webkit-user-select: none;
         }
         .rhythm-touch-btn:active { background: #3e3e48; }
 
-        /* 낙하하는 노트 */
         .rhythm-note {
             position: absolute; left: 10%; width: 80%; height: 14px;
             background: linear-gradient(180deg, #3498db, #2980b9);
@@ -329,7 +321,6 @@
             z-index: 3;
         }
 
-        /* 판정 이펙트 글씨 */
         .judge-text {
             position: absolute; top: 38%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
             font-size: 2.2rem; font-weight: bold; font-style: italic; z-index: 20;
@@ -340,7 +331,6 @@
         .judge-great { color: #2ecc71; text-shadow: 0 0 12px rgba(46, 204, 113, 0.9); }
         .judge-bad { color: #e74c3c; text-shadow: 0 0 12px rgba(231, 76, 60, 0.9); }
 
-        /* 리듬 라이프바 (HP) */
         .rhythm-hud {
             width: 100%; max-width: 360px; margin-top: 12px; display: flex; flex-direction: column; gap: 5px;
         }
@@ -351,7 +341,6 @@
             width: 100%; height: 100%; background: #2ecc71; transition: width 0.1s ease, background-color 0.3s;
         }
 
-        /* 성공 카드 */
         .hidden-card {
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
             background: white; padding: 30px 20px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.2);
@@ -365,7 +354,6 @@
 </head>
 <body>
 
-    <!-- [클리커 본판] -->
     <div class="game-container" id="gameBox">
         <h1>🎂 생일 축하해!</h1>
         <div class="counter-box">클릭 횟수: <span id="clickCount">0</span></div>
@@ -381,14 +369,12 @@
         </div>
     </div>
 
-    <!-- [지뢰찾기 화면] -->
     <div class="card-game-overlay" id="cardModal">
         <h2 style="color: #ff4d6d; margin: 0 0 5px 0; font-size: 1.5rem;">🔎 지뢰찾기: 촛불 탐지!</h2>
         <p style="color: #555; font-size: 0.95rem; margin: 0 0 12px 0; text-align: center;">주변 8칸의 힌트를 얻어 촛불(🕯️)을 찾아 터치하세요!</p>
         <div class="card-grid" id="cardGrid"></div>
     </div>
 
-    <!-- [RPG 배틀 화면] -->
     <div class="rpg-game-overlay" id="rpgModal">
         <div class="boss-bar-container" id="bossBarContainer">
             <div class="boss-text">👑 킹 슬라임</div>
@@ -420,7 +406,6 @@
         </div>
     </div>
 
-    <!-- [리듬 게임 화면] -->
     <div class="rhythm-game-overlay" id="rhythmModal">
         <div class="rhythm-header">
             <h2>🎵 생일 축하 리듬스타! 🎵</h2>
@@ -431,26 +416,37 @@
             <div class="rhythm-judge-line"></div>
             <div class="judge-text" id="judgeLabel">PERFECT!</div>
 
-            <!-- 4개 레인 (터치 충돌을 제거한 onpointerdown 단일 이벤트 설계) -->
             <div class="rhythm-lane" id="lane-0">
                 <div class="lane-flash" id="flash-0"></div>
                 <div class="rhythm-target-frame" id="frame-0"></div>
-                <button class="rhythm-touch-btn" onpointerdown="triggerRhythmKey(event, 0)">◀</button>
+                <button class="rhythm-touch-btn" 
+                        onpointerdown="triggerRhythmKey(event, 0)"
+                        onpointerup="releaseRhythmKey(event, 0)"
+                        onpointerleave="releaseRhythmKey(event, 0)">◀</button>
             </div>
             <div class="rhythm-lane" id="lane-1">
                 <div class="lane-flash" id="flash-1"></div>
                 <div class="rhythm-target-frame" id="frame-1"></div>
-                <button class="rhythm-touch-btn" onpointerdown="triggerRhythmKey(event, 1)">▲</button>
+                <button class="rhythm-touch-btn" 
+                        onpointerdown="triggerRhythmKey(event, 1)"
+                        onpointerup="releaseRhythmKey(event, 1)"
+                        onpointerleave="releaseRhythmKey(event, 1)">▲</button>
             </div>
             <div class="rhythm-lane" id="lane-2">
                 <div class="lane-flash" id="flash-2"></div>
                 <div class="rhythm-target-frame" id="frame-2"></div>
-                <button class="rhythm-touch-btn" onpointerdown="triggerRhythmKey(event, 2)">▼</button>
+                <button class="rhythm-touch-btn" 
+                        onpointerdown="triggerRhythmKey(event, 2)"
+                        onpointerup="releaseRhythmKey(event, 2)"
+                        onpointerleave="releaseRhythmKey(event, 2)">▼</button>
             </div>
             <div class="rhythm-lane" id="lane-3">
                 <div class="lane-flash" id="flash-3"></div>
                 <div class="rhythm-target-frame" id="frame-3"></div>
-                <button class="rhythm-touch-btn" onpointerdown="triggerRhythmKey(event, 3)">▶</button>
+                <button class="rhythm-touch-btn" 
+                        onpointerdown="triggerRhythmKey(event, 3)"
+                        onpointerup="releaseRhythmKey(event, 3)"
+                        onpointerleave="releaseRhythmKey(event, 3)">▶</button>
             </div>
         </div>
 
@@ -465,7 +461,6 @@
         </div>
     </div>
 
-    <!-- [최종 성공 성적표] -->
     <div class="hidden-card" id="celebrateCard">
         <h2>🎉 대단해! 생일 축하해! 🎉</h2>
         <p style="font-size: 1.15rem; color: #ff4d6d; font-weight: bold; margin-bottom: 10px;">300번 대장정 클리어! 🥳</p>
@@ -505,6 +500,9 @@
         const spawnInterval = 700; 
         const noteSpeed = 5.8;     
         const judgeLineY = 352;    
+
+        // ★ 손가락을 뗄 때 발생하는 중복 판정 차단용 트래킹 변수
+        const lanePressed = { 0: false, 1: false, 2: false, 3: false };
 
         function playSound(type) {
             try {
@@ -616,7 +614,6 @@
                 for (let c = 0; c < GRID_SIZE; c++) {
                     const card = document.createElement('div');
                     card.classList.add('card-item');
-                    // 모바일 더블 탭 현상 방지를 위해 pointerdown 단일 이벤트 통합 적용
                     card.addEventListener('pointerdown', (e) => handleCardSweeper(e, r, c, card));
                     grid.appendChild(card);
                 }
@@ -713,9 +710,16 @@
         });
 
         window.addEventListener('keyup', (e) => {
-            if(!rpgActive) return;
-            const key = e.key.toLowerCase();
-            activeKeys.delete(key);
+            if (rpgActive) {
+                const key = e.key.toLowerCase();
+                activeKeys.delete(key);
+            }
+            if (rhythmActive) {
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { releaseRhythmKey(null, 0); }
+                if (e.key === 'ArrowUp' || e.key === 's' || e.key === 'S') { releaseRhythmKey(null, 1); }
+                if (e.key === 'ArrowDown' || e.key === 'k' || e.key === 'K') { releaseRhythmKey(null, 2); }
+                if (e.key === 'ArrowRight' || e.key === 'l' || e.key === 'L') { releaseRhythmKey(null, 3); }
+            }
         });
 
         function triggerScreenShake(screenId = 'rpgScreen') {
@@ -1032,7 +1036,7 @@
             }
         }
 
-        // --- [4. 리듬 게임 로직 (모바일 이벤트 중복 해결 버전)] ---
+        // --- [4. 리듬 게임 로직 (완벽한 터치 락 기능 탑재)] ---
         function initRhythmGame() {
             document.getElementById('rhythmModal').style.display = 'flex';
             rhythmActive = true;
@@ -1041,6 +1045,11 @@
             notesSpawned = 0;
             rhythmNotes = [];
             lastSpawnTime = performance.now();
+
+            // 모든 레인의 터치 상태 락 해제 초기화
+            for (let i = 0; i < 4; i++) {
+                lanePressed[i] = false;
+            }
 
             const existingNotes = document.querySelectorAll('.rhythm-note');
             existingNotes.forEach(n => n.remove());
@@ -1100,14 +1109,17 @@
             if (rhythmActive) rhythmLoopId = requestAnimationFrame(rhythmUpdateLoop);
         }
 
-        // ★ [모바일 최적화 및 중복 타격 해결] triggerRhythmKey 수정
+        // ★ [터치 다운 시점] 터치 락 작동 및 판정 로직
         function triggerRhythmKey(event, laneIdx) {
             if (!rhythmActive) return;
 
-            // 터치/마우스 이벤트가 연달아 발생하는 더블 파이어 버그 완벽 차단!
             if (event) {
                 event.preventDefault();
             }
+
+            // 만약 해당 레인이 이미 눌린 상태라면(터치를 유지 중이거나 탈출 중이라면) 추가 판정 원천 차단!
+            if (lanePressed[laneIdx]) return;
+            lanePressed[laneIdx] = true; // 현재 레인 락 설정
 
             // 1. 레인 플래시 활성화
             const flashEl = document.getElementById(`flash-${laneIdx}`);
@@ -1132,7 +1144,7 @@
                 }
             }
 
-            // 헛쳤을 때
+            // 빈 화면 타격(헛침) 시
             if (targetNoteIdx === -1) {
                 popJudgeText('BAD', 'judge-bad');
                 playSound('rhythm_bad');
@@ -1176,6 +1188,15 @@
             }
 
             checkRhythmRules();
+        }
+
+        // ★ [터치 업/이탈 시점] 손가락을 완전히 뗐을 때만 락을 해제함
+        function releaseRhythmKey(event, laneIdx) {
+            if (event) {
+                event.preventDefault();
+            }
+            // 손가락을 완전히 뗐으므로 다시 누를 수 있게 잠금 해제
+            lanePressed[laneIdx] = false;
         }
 
         function popJudgeText(text, className) {
