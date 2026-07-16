@@ -9,6 +9,8 @@
             -webkit-tap-highlight-color: transparent;
             user-select: none;
             box-sizing: border-box;
+            /* 모바일에서 더블 탭 시 화면이 확대되거나 터치가 지연되는 현상 방지 */
+            touch-action: manipulation; 
         }
 
         body {
@@ -191,7 +193,6 @@
             transition: transform 0.08s ease-out;
         }
         
-        /* 바라보는 방향에 따라 동적으로 위치와 회전이 달라질 방향 지시 화살표 */
         .direction-arrow {
             position: absolute;
             width: 0;
@@ -214,7 +215,7 @@
         }
         .dmg-flash { animation: damage-flash 0.15s ease-out; }
 
-        /* 검 휘두르기 격렬한 원호 검기 연출 (리치 상향에 따라 크기 80px 증가) */
+        /* 검 휘두르기 격렬한 원호 검기 연출 */
         .slash-effect {
             position: absolute; width: 80px; height: 80px; border: 6px solid transparent;
             border-top-color: #f39c12; border-right-color: #f1c40f; border-radius: 50%; z-index: 12; pointer-events: none;
@@ -258,7 +259,7 @@
         .player-hp-bar { width: 100%; height: 100%; background: #e74c3c; transition: width 0.1s ease; }
 
 
-        /* [4. 리듬 게임 모드 (200 클릭)] */
+        /* [4. 리듬 게임 모드] */
         .rhythm-game-overlay {
             display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
             background: #111; z-index: 180; flex-direction: column; align-items: center; justify-content: center; padding: 10px;
@@ -297,7 +298,7 @@
             pointer-events: none; z-index: 2;
         }
 
-        /* ★ [핵심 업그레이드] 각 레인별 불투명 판정 틀 (Target Frame) */
+        /* 각 레인별 불투명 판정 틀 (Target Frame) */
         .rhythm-target-frame {
             position: absolute; bottom: 50px; left: 10%; width: 80%; height: 18px;
             background: rgba(30, 30, 35, 0.95); border: 2.5px solid #f1c40f; border-radius: 4px;
@@ -350,7 +351,6 @@
             width: 100%; height: 100%; background: #2ecc71; transition: width 0.1s ease, background-color 0.3s;
         }
 
-
         /* 성공 카드 */
         .hidden-card {
             display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.5);
@@ -373,7 +373,7 @@
         
         <div class="cake-area" id="cakeArea">
             <div class="cake" id="cakeBody">
-                <div class="flame-container" id="flameHitbox" onmousedown="hitCandle(event)" ontouchstart="hitCandle(event)">
+                <div class="flame-container" id="flameHitbox" onpointerdown="hitCandle(event)">
                     <div class="flame" id="flame"></div>
                     <div class="candle"></div>
                 </div>
@@ -412,15 +412,15 @@
         
         <div class="rpg-controls">
             <div class="d-pad">
-                <div></div><button class="d-btn" onmousedown="setMobileDir('up')" ontouchstart="setMobileDir('up')" onmouseup="clearMobileDir()" ontouchend="clearMobileDir()">▲</button><div></div>
-                <button class="d-btn" onmousedown="setMobileDir('left')" ontouchstart="setMobileDir('left')" onmouseup="clearMobileDir()" ontouchend="clearMobileDir()">◀</button><div></div><button class="d-btn" onmousedown="setMobileDir('right')" ontouchstart="setMobileDir('right')" onmouseup="clearMobileDir()" ontouchend="clearMobileDir()">▶</button>
-                <div></div><button class="d-btn" onmousedown="setMobileDir('down')" ontouchstart="setMobileDir('down')" onmouseup="clearMobileDir()" ontouchend="clearMobileDir()">▼</button><div></div>
+                <div></div><button class="d-btn" onpointerdown="setMobileDir('up')" onpointerup="clearMobileDir()" onpointerleave="clearMobileDir()">▲</button><div></div>
+                <button class="d-btn" onpointerdown="setMobileDir('left')" onpointerup="clearMobileDir()" onpointerleave="clearMobileDir()">◀</button><div></div><button class="d-btn" onpointerdown="setMobileDir('right')" onpointerup="clearMobileDir()" onpointerleave="clearMobileDir()">▶</button>
+                <div></div><button class="d-btn" onpointerdown="setMobileDir('down')" onpointerup="clearMobileDir()" onpointerleave="clearMobileDir()">▼</button><div></div>
             </div>
-            <button class="atk-btn" onmousedown="rpgSlashAttack()" ontouchstart="rpgSlashAttack()">공격</button>
+            <button class="atk-btn" onpointerdown="rpgSlashAttack()">공격</button>
         </div>
     </div>
 
-    <!-- [리듬 게임 화면 (200 클릭 대안)] -->
+    <!-- [리듬 게임 화면] -->
     <div class="rhythm-game-overlay" id="rhythmModal">
         <div class="rhythm-header">
             <h2>🎵 생일 축하 리듬스타! 🎵</h2>
@@ -431,26 +431,26 @@
             <div class="rhythm-judge-line"></div>
             <div class="judge-text" id="judgeLabel">PERFECT!</div>
 
-            <!-- 4개 레인 (각 라인에 배경 플래시 및 불투명 프레임 탑재) -->
+            <!-- 4개 레인 (터치 충돌을 제거한 onpointerdown 단일 이벤트 설계) -->
             <div class="rhythm-lane" id="lane-0">
                 <div class="lane-flash" id="flash-0"></div>
                 <div class="rhythm-target-frame" id="frame-0"></div>
-                <button class="rhythm-touch-btn" onmousedown="triggerRhythmKey(0)" ontouchstart="triggerRhythmKey(0)">◀</button>
+                <button class="rhythm-touch-btn" onpointerdown="triggerRhythmKey(event, 0)">◀</button>
             </div>
             <div class="rhythm-lane" id="lane-1">
                 <div class="lane-flash" id="flash-1"></div>
                 <div class="rhythm-target-frame" id="frame-1"></div>
-                <button class="rhythm-touch-btn" onmousedown="triggerRhythmKey(1)" ontouchstart="triggerRhythmKey(1)">▲</button>
+                <button class="rhythm-touch-btn" onpointerdown="triggerRhythmKey(event, 1)">▲</button>
             </div>
             <div class="rhythm-lane" id="lane-2">
                 <div class="lane-flash" id="flash-2"></div>
                 <div class="rhythm-target-frame" id="frame-2"></div>
-                <button class="rhythm-touch-btn" onmousedown="triggerRhythmKey(2)" ontouchstart="triggerRhythmKey(2)">▼</button>
+                <button class="rhythm-touch-btn" onpointerdown="triggerRhythmKey(event, 2)">▼</button>
             </div>
             <div class="rhythm-lane" id="lane-3">
                 <div class="lane-flash" id="flash-3"></div>
                 <div class="rhythm-target-frame" id="frame-3"></div>
-                <button class="rhythm-touch-btn" onmousedown="triggerRhythmKey(3)" ontouchstart="triggerRhythmKey(3)">▶</button>
+                <button class="rhythm-touch-btn" onpointerdown="triggerRhythmKey(event, 3)">▶</button>
             </div>
         </div>
 
@@ -491,20 +491,20 @@
         const activeKeys = new Set();
         let mobileDir = null; 
 
-        // --- [★ 리듬 게임 대폭 업그레이드 밸런스 변수] ---
+        // 리듬 게임 변수
         let rhythmActive = false;
         let rhythmLoopId = null;
         let rhythmHp = 100;
         const rhythmMaxHp = 100;
         
-        let notesToWin = 30; // ★ 목표 노트 수 증가 (기존 15 -> 30)
+        let notesToWin = 30; 
         let notesSpawned = 0;
         let rhythmNotes = [];
         let lastSpawnTime = 0;
         
-        const spawnInterval = 700; // ★ 생성 간격 대폭 단축 (기존 1200ms -> 700ms)
-        const noteSpeed = 5.8;     // ★ 노트 낙하 속도 증가 (기존 3.5 -> 5.8)
-        const judgeLineY = 352;    // 판정선 위치 좌표
+        const spawnInterval = 700; 
+        const noteSpeed = 5.8;     
+        const judgeLineY = 352;    
 
         function playSound(type) {
             try {
@@ -616,8 +616,8 @@
                 for (let c = 0; c < GRID_SIZE; c++) {
                     const card = document.createElement('div');
                     card.classList.add('card-item');
-                    card.addEventListener('mousedown', (e) => handleCardSweeper(e, r, c, card));
-                    card.addEventListener('touchstart', (e) => handleCardSweeper(e, r, c, card));
+                    // 모바일 더블 탭 현상 방지를 위해 pointerdown 단일 이벤트 통합 적용
+                    card.addEventListener('pointerdown', (e) => handleCardSweeper(e, r, c, card));
                     grid.appendChild(card);
                 }
             }
@@ -629,13 +629,13 @@
 
             if (r === targetRow && c === targetCol) {
                 cardElement.classList.add('hit-target'); cardElement.innerHTML = '🕯️';
-                const resetAction = () => {
+                const resetAction = (ev) => {
+                    ev.preventDefault();
                     document.getElementById('cardModal').style.display = 'none';
                     document.getElementById('guideText').innerText = "촛불을 왜 100번이나 누르셨죠?";
                     hitCandle(); 
                 };
-                cardElement.addEventListener('mousedown', resetAction);
-                cardElement.addEventListener('touchstart', resetAction);
+                cardElement.addEventListener('pointerdown', resetAction);
             } else {
                 playSound('miss'); cardElement.classList.add('miss');
                 let count = (Math.abs(r - targetRow) <= 1 && Math.abs(c - targetCol) <= 1) ? 1 : 0;
@@ -705,10 +705,10 @@
                 if(e.key === ' ') { e.preventDefault(); rpgSlashAttack(); }
             }
             if (rhythmActive) {
-                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { triggerRhythmKey(0); }
-                if (e.key === 'ArrowUp' || e.key === 's' || e.key === 'S') { triggerRhythmKey(1); }
-                if (e.key === 'ArrowDown' || e.key === 'k' || e.key === 'K') { triggerRhythmKey(2); }
-                if (e.key === 'ArrowRight' || e.key === 'l' || e.key === 'L') { triggerRhythmKey(3); }
+                if (e.key === 'ArrowLeft' || e.key === 'a' || e.key === 'A') { triggerRhythmKey(null, 0); }
+                if (e.key === 'ArrowUp' || e.key === 's' || e.key === 'S') { triggerRhythmKey(null, 1); }
+                if (e.key === 'ArrowDown' || e.key === 'k' || e.key === 'K') { triggerRhythmKey(null, 2); }
+                if (e.key === 'ArrowRight' || e.key === 'l' || e.key === 'L') { triggerRhythmKey(null, 3); }
             }
         });
 
@@ -726,12 +726,10 @@
             setTimeout(() => screen.classList.remove('shake'), 180);
         }
 
-        // ★ [이펙트 강화] 파티클 생성 시스템 고도화
         function spawnHitParticles(x, y, isRhythm = false) {
             const parentId = isRhythm ? 'rhythmScreen' : 'rpgScreen';
             const screen = document.getElementById(parentId);
             
-            // 리듬 게임일 경우 타격 파티클 개수를 14개로 늘리고 화려한 형광색 배합
             const pCount = isRhythm ? 14 : 6;
             const colors = isRhythm ? ['#f1c40f', '#00f0ff', '#ff007f', '#2ecc71'] : ['#ffbe0b'];
 
@@ -1034,12 +1032,12 @@
             }
         }
 
-        // --- [4. 리듬 게임 로직 (200클릭 단계 업그레이드)] ---
+        // --- [4. 리듬 게임 로직 (모바일 이벤트 중복 해결 버전)] ---
         function initRhythmGame() {
             document.getElementById('rhythmModal').style.display = 'flex';
             rhythmActive = true;
             rhythmHp = 100;
-            notesToWin = 30; // 30개 클리어 목표
+            notesToWin = 30; 
             notesSpawned = 0;
             rhythmNotes = [];
             lastSpawnTime = performance.now();
@@ -1052,7 +1050,7 @@
         }
 
         function spawnRhythmNote() {
-            if (notesSpawned >= 60) return; // 한 판에 발생 가능한 최대 세션 노트 한도 확장
+            if (notesSpawned >= 60) return; 
             
             const laneIndex = Math.floor(Math.random() * 4);
             const laneEl = document.getElementById(`lane-${laneIndex}`);
@@ -1077,7 +1075,6 @@
         function rhythmUpdateLoop(timestamp) {
             if (!rhythmActive) return;
 
-            // 빠른 스폰 주기 700ms 적용
             if (timestamp - lastSpawnTime > spawnInterval && notesSpawned < 55) {
                 spawnRhythmNote();
                 lastSpawnTime = timestamp;
@@ -1085,14 +1082,13 @@
 
             for (let i = rhythmNotes.length - 1; i >= 0; i--) {
                 const note = rhythmNotes[i];
-                note.y += noteSpeed; // 속도 5.8
+                note.y += noteSpeed; 
                 note.element.style.top = note.y + 'px';
 
-                // 판정선 통과 후 놓쳤을 때
                 if (note.y > judgeLineY + 38) {
                     popJudgeText('BAD', 'judge-bad');
                     playSound('rhythm_bad');
-                    rhythmHp -= 12; // 감점
+                    rhythmHp -= 12; 
                     rhythmNotes.splice(i, 1);
                     note.element.remove();
                     triggerScreenShake('rhythmScreen'); 
@@ -1104,17 +1100,23 @@
             if (rhythmActive) rhythmLoopId = requestAnimationFrame(rhythmUpdateLoop);
         }
 
-        function triggerRhythmKey(laneIdx) {
+        // ★ [모바일 최적화 및 중복 타격 해결] triggerRhythmKey 수정
+        function triggerRhythmKey(event, laneIdx) {
             if (!rhythmActive) return;
 
-            // ★ [이펙트 강화] 1. 레인 플래시 활성화
+            // 터치/마우스 이벤트가 연달아 발생하는 더블 파이어 버그 완벽 차단!
+            if (event) {
+                event.preventDefault();
+            }
+
+            // 1. 레인 플래시 활성화
             const flashEl = document.getElementById(`flash-${laneIdx}`);
             if (flashEl) {
                 flashEl.classList.add('active');
                 setTimeout(() => flashEl.classList.remove('active'), 100);
             }
 
-            // ★ [이펙트 강화] 2. 판정 가이드 틀 일시 폭발 리액션
+            // 2. 판정 가이드 틀 폭발 리액션
             const frameEl = document.getElementById(`frame-${laneIdx}`);
             if (frameEl) {
                 frameEl.classList.add('hit-active');
@@ -1130,7 +1132,7 @@
                 }
             }
 
-            // 완전 헛쳤을 때
+            // 헛쳤을 때
             if (targetNoteIdx === -1) {
                 popJudgeText('BAD', 'judge-bad');
                 playSound('rhythm_bad');
@@ -1143,23 +1145,19 @@
             const note = rhythmNotes[targetNoteIdx];
             const diff = Math.abs(note.y - judgeLineY);
 
-            // 해당 레인 중심 가로 위치 연산 (파티클 스폰용)
             const laneEl = document.getElementById(`lane-${laneIdx}`);
             const rect = laneEl.getBoundingClientRect();
             const pX = rect.width / 2;
 
-            // 판정 로직
             if (diff <= 16) {
-                // PERFECT
                 popJudgeText('PERFECT!', 'judge-perfect');
                 playSound('rhythm_perfect');
-                spawnHitParticles(pX, judgeLineY, true); // 강화된 파티클
+                spawnHitParticles(pX, judgeLineY, true); 
                 
                 notesToWin--;
                 rhythmNotes.splice(targetNoteIdx, 1);
                 note.element.remove();
             } else if (diff <= 38) {
-                // GREAT
                 popJudgeText('GREAT', 'judge-great');
                 playSound('rhythm_great');
                 spawnHitParticles(pX, judgeLineY, true);
@@ -1168,7 +1166,6 @@
                 rhythmNotes.splice(targetNoteIdx, 1);
                 note.element.remove();
             } else {
-                // 너무 빠르거나 늦은 경우 BAD
                 popJudgeText('BAD', 'judge-bad');
                 playSound('rhythm_bad');
                 triggerScreenShake('rhythmScreen');
@@ -1226,7 +1223,6 @@
             }
         }
 
-        // --- [성공 축하 가루 생성] ---
         function createConfetti(isSides) {
             const count = isSides ? 40 : 70;
             for (let i = 0; i < count; i++) {
